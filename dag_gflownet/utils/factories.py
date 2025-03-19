@@ -1,7 +1,7 @@
 from numpy.random import default_rng
 
 from dag_gflownet.scores import BDeScore, BGeScore, priors
-from dag_gflownet.utils.data import get_data
+from dag_gflownet.utils.data import get_data, load_data_from_file
 
 
 def get_prior(name, **kwargs):
@@ -16,7 +16,8 @@ def get_prior(name, **kwargs):
 
 def get_scorer(args, rng=default_rng()):
     # Get the data
-    graph, data, score = get_data(args.graph, args, rng=rng)
+    # graph, data, score = get_data(args.graph, args, rng=rng)
+    graph, data, score = load_data_from_file('./datasets/7var')
 
     # Get the prior
     prior = get_prior(args.prior, **args.prior_kwargs)
