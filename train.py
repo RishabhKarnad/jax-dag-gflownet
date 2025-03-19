@@ -63,8 +63,10 @@ def main(args):
         for iteration in pbar:
             # Sample actions, execute them, and save transitions in the replay buffer
             epsilon = exploration_schedule(iteration)
-            actions, key, logs = gflownet.act(params.online, key, observations, epsilon)
-            next_observations, delta_scores, dones, _ = env.step(np.asarray(actions))
+            actions, key, logs = gflownet.act(
+                params.online, key, observations, epsilon)
+            next_observations, delta_scores, dones, _ = env.step(
+                np.asarray(actions))
             indices = replay.add(
                 observations,
                 actions,
@@ -81,7 +83,8 @@ def main(args):
                 samples = replay.sample(batch_size=args.batch_size, rng=rng)
                 params, state, logs = gflownet.step(params, state, samples)
 
-                pbar.set_postfix(loss=f"{logs['loss']:.2f}", epsilon=f"{epsilon:.2f}")
+                pbar.set_postfix(
+                    loss=f"{logs['loss']:.2f}", epsilon=f"{epsilon:.2f}")
 
     # Evaluate the posterior estimate
     posterior, _ = posterior_estimate(
@@ -120,71 +123,74 @@ if __name__ == '__main__':
     from pathlib import Path
     import json
 
+    print(jax.devices())
+
     parser = ArgumentParser(description='DAG-GFlowNet for Strucure Learning.')
 
     # Environment
     environment = parser.add_argument_group('Environment')
     environment.add_argument('--num_envs', type=int, default=8,
-        help='Number of parallel environments (default: %(default)s)')
+                             help='Number of parallel environments (default: %(default)s)')
     environment.add_argument('--scorer_kwargs', type=json.loads, default='{}',
-        help='Arguments of the scorer.')
+                             help='Arguments of the scorer.')
     environment.add_argument('--prior', type=str, default='uniform',
-        choices=['uniform', 'erdos_renyi', 'edge', 'fair'],
-        help='Prior over graphs (default: %(default)s)')
+                             choices=['uniform', 'erdos_renyi',
+                                      'edge', 'fair'],
+                             help='Prior over graphs (default: %(default)s)')
     environment.add_argument('--prior_kwargs', type=json.loads, default='{}',
-        help='Arguments of the prior over graphs.')
+                             help='Arguments of the prior over graphs.')
 
     # Optimization
     optimization = parser.add_argument_group('Optimization')
     optimization.add_argument('--lr', type=float, default=1e-5,
-        help='Learning rate (default: %(default)s)')
+                              help='Learning rate (default: %(default)s)')
     optimization.add_argument('--delta', type=float, default=1.,
-        help='Value of delta for Huber loss (default: %(default)s)')
+                              help='Value of delta for Huber loss (default: %(default)s)')
     optimization.add_argument('--batch_size', type=int, default=32,
-        help='Batch size (default: %(default)s)')
+                              help='Batch size (default: %(default)s)')
     optimization.add_argument('--num_iterations', type=int, default=100_000,
-        help='Number of iterations (default: %(default)s)')
+                              help='Number of iterations (default: %(default)s)')
 
     # Replay buffer
     replay = parser.add_argument_group('Replay Buffer')
     replay.add_argument('--replay_capacity', type=int, default=100_000,
-        help='Capacity of the replay buffer (default: %(default)s)')
+                        help='Capacity of the replay buffer (default: %(default)s)')
     replay.add_argument('--prefill', type=int, default=1000,
-        help='Number of iterations with a random policy to prefill '
-             'the replay buffer (default: %(default)s)')
-    
+                        help='Number of iterations with a random policy to prefill '
+                        'the replay buffer (default: %(default)s)')
+
     # Exploration
     exploration = parser.add_argument_group('Exploration')
     exploration.add_argument('--min_exploration', type=float, default=0.1,
-        help='Minimum value of epsilon-exploration (default: %(default)s)')
+                             help='Minimum value of epsilon-exploration (default: %(default)s)')
     exploration.add_argument('--update_epsilon_every', type=int, default=10,
-        help='Frequency of update for epsilon (default: %(default)s)')
-    
+                             help='Frequency of update for epsilon (default: %(default)s)')
+
     # Miscellaneous
     misc = parser.add_argument_group('Miscellaneous')
     misc.add_argument('--num_samples_posterior', type=int, default=1000,
-        help='Number of samples for the posterior estimate (default: %(default)s)')
+                      help='Number of samples for the posterior estimate (default: %(default)s)')
     misc.add_argument('--update_target_every', type=int, default=1000,
-        help='Frequency of update for the target network (default: %(default)s)')
+                      help='Frequency of update for the target network (default: %(default)s)')
     misc.add_argument('--seed', type=int, default=0,
-        help='Random seed (default: %(default)s)')
+                      help='Random seed (default: %(default)s)')
     misc.add_argument('--num_workers', type=int, default=4,
-        help='Number of workers (default: %(default)s)')
+                      help='Number of workers (default: %(default)s)')
     misc.add_argument('--mp_context', type=str, default='spawn',
-        help='Multiprocessing context (default: %(default)s)')
+                      help='Multiprocessing context (default: %(default)s)')
     misc.add_argument('--output_folder', type=Path, default='output',
-        help='Output folder (default: %(default)s)')
+                      help='Output folder (default: %(default)s)')
 
     subparsers = parser.add_subparsers(help='Type of graph', dest='graph')
 
     # Erdos-Renyi Linear-Gaussian graphs
     er_lingauss = subparsers.add_parser('erdos_renyi_lingauss')
     er_lingauss.add_argument('--num_variables', type=int, required=True,
-        help='Number of variables')
+                             help='Number of variables')
     er_lingauss.add_argument('--num_edges', type=int, required=True,
-        help='Average number of edges')
+                             help='Average number of edges')
     er_lingauss.add_argument('--num_samples', type=int, required=True,
-        help='Number of samples')
+                             help='Number of samples')
 
     # Flow cytometry data (Sachs) with observational data
     sachs_continuous = subparsers.add_parser('sachs_continuous')

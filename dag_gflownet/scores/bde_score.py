@@ -21,7 +21,7 @@ class BDeScore(BaseScore):
         corresponds to one variable. If there is interventional data, the
         interventional targets must be specified in the "INT" column (the
         indices of interventional targets are assumed to be 1-based).
-    
+
     prior : `BasePrior` instance
         The prior over graphs p(G).
 
@@ -30,6 +30,7 @@ class BDeScore(BaseScore):
         Dirichlet hyperparameters. The score is sensitive to this value,
         runs with different values might be useful.
     """
+
     def __init__(self, data, prior, equivalent_sample_size=1.):
         if 'INT' in data.columns:  # Interventional data
             # Indices should start at 0, instead of 1;
@@ -78,21 +79,22 @@ class BDeScore(BaseScore):
             )
 
         parent_states = [self.state_names[parent] for parent in parents]
-        columns_index = pd.MultiIndex.from_product(parent_states, names=parents)
+        columns_index = pd.MultiIndex.from_product(
+            parent_states, names=parents)
 
         state_counts_after = StateCounts(
             key=(target, tuple(all_indices)),
             counts=(state_count_data
-                .reindex(index=self.state_names[variable], columns=columns_index)
-                .fillna(0))
+                    .reindex(index=self.state_names[variable], columns=columns_index)
+                    .fillna(0))
         )
 
         if indices_after is not None:
             subset_parents = [self.column_names[index] for index in indices]
             if subset_parents:
                 data = (state_counts_after.counts
-                    .groupby(axis=1, level=subset_parents)
-                    .sum())
+                        .groupby(axis=1, level=subset_parents)
+                        .sum())
             else:
                 data = state_counts_after.counts.sum(axis=1).to_frame()
 
@@ -110,7 +112,7 @@ class BDeScore(BaseScore):
         num_parents_states = counts.shape[1]
         num_parents = len(key[1])
 
-        log_gamma_counts = np.zeros_like(counts, dtype=np.float_)
+        log_gamma_counts = np.zeros_like(counts, dtype=np.float64)
         alpha = self.equivalent_sample_size / num_parents_states
         beta = self.equivalent_sample_size / counts.size
 
@@ -118,7 +120,7 @@ class BDeScore(BaseScore):
         gammaln(counts + beta, out=log_gamma_counts)
 
         # Compute the log-gamma conditional sample size
-        log_gamma_conds = np.sum(counts, axis=0, dtype=np.float_)
+        log_gamma_conds = np.sum(counts, axis=0, dtype=np.float64)
         gammaln(log_gamma_conds + alpha, out=log_gamma_conds)
 
         local_score = (

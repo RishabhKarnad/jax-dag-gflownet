@@ -11,14 +11,14 @@ from dag_gflownet.utils.cache import LRUCache
 
 class GFlowNetDAGEnv(gym.vector.VectorEnv):
     def __init__(
-            self,
-            num_envs,
-            scorer,
-            max_parents=None,
-            num_workers=4,
-            context=None,
-            cache_max_size=10_000
-        ):
+        self,
+        num_envs,
+        scorer,
+        max_parents=None,
+        num_workers=4,
+        context=None,
+        cache_max_size=10_000
+    ):
         """GFlowNet environment for learning a distribution over DAGs.
 
         Parameters
@@ -26,7 +26,7 @@ class GFlowNetDAGEnv(gym.vector.VectorEnv):
         num_envs : int
             Number of parallel environments, or equivalently the number of
             parallel trajectories to sample.
-        
+
         scorer : BaseScore instance
             The score to use. Note that this contains the data.
 
@@ -63,7 +63,8 @@ class GFlowNetDAGEnv(gym.vector.VectorEnv):
             for index in range(num_workers):
                 process = ctx.Process(
                     target=self.scorer,
-                    args=(index, self.in_queue, self.out_queue, self.error_queue),
+                    args=(index, self.in_queue,
+                          self.out_queue, self.error_queue),
                     daemon=True
                 )
                 process.start()
@@ -74,7 +75,7 @@ class GFlowNetDAGEnv(gym.vector.VectorEnv):
             'adjacency': Box(low=0., high=1., shape=shape, dtype=np.int_),
             'mask': Box(low=0., high=1., shape=shape, dtype=np.int_),
             'num_edges': Discrete(max_edges),
-            'score': Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float_),
+            'score': Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64),
             'order': Box(low=-1, high=max_edges, shape=shape, dtype=np.int_)
         })
         action_space = Discrete(self.num_variables ** 2 + 1)
@@ -88,7 +89,7 @@ class GFlowNetDAGEnv(gym.vector.VectorEnv):
             'adjacency': np.zeros(shape, dtype=np.int_),
             'mask': 1 - self._closure_T,
             'num_edges': np.zeros((self.num_envs,), dtype=np.int_),
-            'score': np.zeros((self.num_envs,), dtype=np.float_),
+            'score': np.zeros((self.num_envs,), dtype=np.float64),
             'order': np.full(shape, -1, dtype=np.int_)
         }
         return deepcopy(self._state)
@@ -110,9 +111,12 @@ class GFlowNetDAGEnv(gym.vector.VectorEnv):
         self._state['adjacency'][dones] = 0
 
         # Update transitive closure of transpose
-        source_rows = np.expand_dims(self._closure_T[~dones, sources, :], axis=1)
-        target_cols = np.expand_dims(self._closure_T[~dones, :, targets], axis=2)
-        self._closure_T[~dones] |= np.logical_and(source_rows, target_cols)  # Outer product
+        source_rows = np.expand_dims(
+            self._closure_T[~dones, sources, :], axis=1)
+        target_cols = np.expand_dims(
+            self._closure_T[~dones, :, targets], axis=2)
+        self._closure_T[~dones] |= np.logical_and(
+            source_rows, target_cols)  # Outer product
         self._closure_T[dones] = np.eye(self.num_variables, dtype=np.bool_)
 
         # Update the masks
@@ -123,7 +127,8 @@ class GFlowNetDAGEnv(gym.vector.VectorEnv):
         self._state['mask'] *= (num_parents < self.max_parents)
 
         # Update the order
-        self._state['order'][~dones, sources, targets] = self._state['num_edges'][~dones]
+        self._state['order'][~dones, sources,
+                             targets] = self._state['num_edges'][~dones]
         self._state['order'][dones] = -1
 
         # Update the number of edges
@@ -154,7 +159,7 @@ class GFlowNetDAGEnv(gym.vector.VectorEnv):
 
                 # Key before adding the new source node
                 indices = tuple(index for index, is_parent
-                    in enumerate(adjacency[:, target]) if is_parent)
+                                in enumerate(adjacency[:, target]) if is_parent)
 
                 # Key after adding the new source node
                 indices_after = list(indices)
@@ -220,7 +225,7 @@ class GFlowNetDAGEnv(gym.vector.VectorEnv):
                     - self.local_scores[(target, key_tm1)]
                 )
 
-        return np.array(delta_scores, dtype=np.float_)
+        return np.array(delta_scores, dtype=np.float64)
 
     def _is_in_cache(self, key, local_cache):
         if key in self.local_scores:

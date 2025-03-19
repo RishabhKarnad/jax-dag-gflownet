@@ -15,8 +15,8 @@ class ReplayBuffer:
             ('num_edges', np.int_, (1,)),
             ('actions', np.int_, (1,)),
             ('is_exploration', np.bool_, (1,)),
-            ('delta_scores', np.float_, (1,)),
-            ('scores', np.float_, (1,)),
+            ('delta_scores', np.float64, (1,)),
+            ('scores', np.float64, (1,)),
             ('mask', np.uint8, (nbytes,)),
             ('next_adjacency', np.uint8, (nbytes,)),
             ('next_mask', np.uint8, (nbytes,))
@@ -27,21 +27,22 @@ class ReplayBuffer:
         self._prev = np.full((capacity,), -1, dtype=np.int_)
 
     def add(
-            self,
-            observations,
-            actions,
-            is_exploration,
-            next_observations,
-            delta_scores,
-            dones,
-            prev_indices=None
-        ):
+        self,
+        observations,
+        actions,
+        is_exploration,
+        next_observations,
+        delta_scores,
+        dones,
+        prev_indices=None
+    ):
         indices = np.full((dones.shape[0],), -1, dtype=np.int_)
         if np.all(dones):
             return indices
 
         num_samples = np.sum(~dones)
-        add_idx = np.arange(self._index, self._index + num_samples) % self.capacity
+        add_idx = np.arange(self._index, self._index +
+                            num_samples) % self.capacity
         self._is_full |= (self._index + num_samples >= self.capacity)
         self._index = (self._index + num_samples) % self.capacity
         indices[~dones] = add_idx
@@ -62,8 +63,9 @@ class ReplayBuffer:
 
         for name in data:
             shape = self._replay.dtype[name].shape
-            self._replay[name][add_idx] = np.asarray(data[name].reshape(-1, *shape))
-        
+            self._replay[name][add_idx] = np.asarray(
+                data[name].reshape(-1, *shape))
+
         if prev_indices is not None:
             self._prev[add_idx] = prev_indices[~dones]
 
@@ -124,8 +126,10 @@ class ReplayBuffer:
         return np.packbits(encoded, axis=1)
 
     def decode(self, encoded, dtype=np.float32):
-        decoded = np.unpackbits(encoded, axis=-1, count=self.num_variables ** 2)
-        decoded = decoded.reshape(*encoded.shape[:-1], self.num_variables, self.num_variables)
+        decoded = np.unpackbits(
+            encoded, axis=-1, count=self.num_variables ** 2)
+        decoded = decoded.reshape(
+            *encoded.shape[:-1], self.num_variables, self.num_variables)
         return decoded.astype(dtype)
 
     @property
@@ -135,7 +139,7 @@ class ReplayBuffer:
             'adjacency': np.zeros(shape, dtype=np.float32),
             'num_edges': np.zeros((1,), dtype=np.int_),
             'actions': np.zeros((1,), dtype=np.int_),
-            'delta_scores': np.zeros((1,), dtype=np.float_),
+            'delta_scores': np.zeros((1,), dtype=np.float64),
             'mask': np.zeros(shape, dtype=np.float32),
             'next_adjacency': np.zeros(shape, dtype=np.float32),
             'next_mask': np.zeros(shape, dtype=np.float32)
