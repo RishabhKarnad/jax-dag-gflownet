@@ -17,7 +17,7 @@ def get_prior(name, **kwargs):
 def get_scorer(args, rng=default_rng()):
     # Get the data
     # graph, data, score = get_data(args.graph, args, rng=rng)
-    graph, data, score = load_data_from_file('./datasets/7var')
+    graph, data, score = load_data_from_file(args.dataset_dir)
 
     # Get the prior
     prior = get_prior(args.prior, **args.prior_kwargs)

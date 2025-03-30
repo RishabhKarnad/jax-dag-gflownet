@@ -1,5 +1,15 @@
 #! /bin/bash
 
-export CUDA_VISIBLE_DEVICES=15
+export CUDA_VISIBLE_DEVICES=11
 
-python train.py --batch_size 256 erdos_renyi_lingauss --num_variables 5 --num_edges 5 --num_samples 100
+DATASET='3var'
+rm -rf ./output/$DATASET/*
+python train.py --batch_size 256 --num_samples_posterior 1000 --output_folder ./output/$DATASET --dataset_dir ../dag-gwg/datasets/$DATASET erdos_renyi_lingauss --num_variables 3 --num_edges 2 --num_samples 1000
+
+DATASET='4var'
+rm -rf ./output/$DATASET/*
+python train.py --batch_size 256 --num_samples_posterior 1000 --output_folder ./output/$DATASET --dataset_dir ../dag-gwg/datasets/$DATASET erdos_renyi_lingauss --num_variables 4 --num_edges 4 --num_samples 1000
+
+DATASET='7var'
+rm -rf ./output/$DATASET/*
+python train.py --batch_size 256 --num_samples_posterior 1000 --output_folder ./output/$DATASET --dataset_dir ../dag-gwg/datasets/$DATASET erdos_renyi_lingauss --num_variables 7 --num_edges 10 --num_samples 1000

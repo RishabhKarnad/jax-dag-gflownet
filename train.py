@@ -180,6 +180,8 @@ if __name__ == '__main__':
                       help='Multiprocessing context (default: %(default)s)')
     misc.add_argument('--output_folder', type=Path, default='output',
                       help='Output folder (default: %(default)s)')
+    misc.add_argument('--dataset_dir', type=Path, default='./',
+                      help='Dataset directory; must contain data.npy and G.npy (default: %(default)s)')
 
     subparsers = parser.add_subparsers(help='Type of graph', dest='graph')
 
